@@ -20,32 +20,49 @@ query = """
 """
 df = pd.read_sql_query(query, conn)
 
-# Đặt kiểu dữ liệu của cột 'summary' thành chuỗi
-df['summary'] = ''
-
 # Lặp qua từng hàng trong DataFrame và tạo tóm tắt cho cột "content_html"
 for index, row in df.iterrows():
-    url = row['url']
-    content = row['content_html']
+    if not row['summary']:  # Chỉ tạo tóm tắt nếu summary là trống
+        url = row['url']
+        content = row['content_html']
 
-    # Kiểm tra nếu domain không thuộc danh sách các domain được yêu cầu
-    if not any(domain in url for domain in ['theverge.com', 'appleinsider.com', 'engadget.com', '9to5google.com', 'gizmodo.com', 'macrumors.com']):
-        summary = "Bài viết này không có tóm tắt"
-    else:
-        text_to_summarize = "Summarize the following text into paragraphs, adding <li> at the beginning:" + content
+        # Kiểm tra nếu domain không thuộc danh sách các domain được yêu cầu
+        if not any(domain in url for domain in ['theverge.com',
+            'engadget.com',
+            'slashgear.com',
+            'gizmodo.com',
+            'techcrunch.com',
+            'thenextweb.com',
+            'wired.com',
+            'fastcompany.com',
+            'anandtech.com',
+            'lifehacker.com',
+            'pcworld.com',
+            'cnet.com',
+            'windowscentral.com',
+            'androidcentral.com',
+            '9to5mac.com',
+            'bgr.com',
+            'gsmarena.com',
+            'macrumors.com',
+            '9to5google.com',
+            'notebookcheck.net']):
+            summary = "Bài viết này không có tóm tắt"
+        else:
+            text_to_summarize = "Summarize the following text into paragraphs, adding <li> at the beginning:" + content
 
-        # Tạo tóm tắt văn bản bằng mã của bạn
-        palm.configure(api_key='AIzaSyA587Mh3lxH3JOIw_5hseKvw5-KsIKhLNs')  # Thay YOUR_API_KEY bằng API key của bạn
-        response = palm.generate_text(prompt=text_to_summarize)
-        summary = response.result
+            # Tạo tóm tắt văn bản bằng mã của bạn
+            palm.configure(api_key='AIzaSyA587Mh3lxH3JOIw_5hseKvw5-KsIKhLNs')  # Thay YOUR_API_KEY bằng API key của bạn
+            response = palm.generate_text(prompt=text_to_summarize)
+            summary = response.result
 
-    # Kiểm tra nếu summary không phải là None trước khi gán giá trị
-    if summary is not None:
-        # Chuyển đổi giá trị summary sang kiểu chuỗi (string)
-        summary = str(summary)
+        # Kiểm tra nếu summary không phải là None trước khi gán giá trị
+        if summary is not None:
+            # Chuyển đổi giá trị summary sang kiểu chuỗi (string)
+            summary = str(summary)
 
-        # Lưu tóm tắt vào cột 'summary' trong DataFrame
-        df.at[index, 'summary'] = summary
+            # Lưu tóm tắt vào cột 'summary' trong DataFrame
+            df.at[index, 'summary'] = summary
 
 # Cập nhật cơ sở dữ liệu SQLite với các giá trị đã tạo tóm tắt
 df.to_sql('news', conn, if_exists='replace', index=False)
