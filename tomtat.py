@@ -52,7 +52,7 @@ for index, row in df.iterrows():
             text_to_summarize = "Summarize the following text into paragraphs, adding <li> at the beginning:" + content
 
             # Tạo tóm tắt văn bản bằng mã của bạn
-            palm.configure(api_key='AIzaSyA587Mh3lxH3JOIw_5hseKvw5-KsIKhLNs')  # Thay YOUR_API_KEY bằng API key của bạn
+            palm.configure(api_key='')  # Thay YOUR_API_KEY bằng API key của bạn
             response = palm.generate_text(prompt=text_to_summarize)
             summary = response.result
 
