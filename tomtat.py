@@ -6,55 +6,25 @@ import google.generativeai as palm
 conn = sqlite3.connect('news_data.db')
 cursor = conn.cursor()
 
-# Kiểm tra nếu cột 'summary' không tồn tại trong bảng 'news', hãy thêm nó
-cursor.execute("PRAGMA table_info(news)")
-columns = [column[1] for column in cursor.fetchall()]
-if 'summary' not in columns:
-    cursor.execute('ALTER TABLE news ADD COLUMN summary TEXT')
-    conn.commit()
-
-# Đọc dữ liệu từ cơ sở dữ liệu SQLite và tạo tóm tắt cho các bài viết chỉ khi cột "summary" chưa có giá trị
+# Đọc dữ liệu từ cơ sở dữ liệu SQLite
 query = """
     SELECT *
     FROM news
 """
 df = pd.read_sql_query(query, conn)
 
-# Lặp qua từng hàng trong DataFrame và tạo tóm tắt cho cột "content_html"
+# Lặp qua từng hàng trong DataFrame và tạo tóm tắt cho cột "content_html" nếu summary là trống
 for index, row in df.iterrows():
     if not row['summary']:  # Chỉ tạo tóm tắt nếu summary là trống
         url = row['url']
         content = row['content_html']
 
-        # Kiểm tra nếu domain không thuộc danh sách các domain được yêu cầu
-        if not any(domain in url for domain in ['theverge.com',
-            'engadget.com',
-            'slashgear.com',
-            'gizmodo.com',
-            'techcrunch.com',
-            'thenextweb.com',
-            'wired.com',
-            'fastcompany.com',
-            'anandtech.com',
-            'lifehacker.com',
-            'pcworld.com',
-            'cnet.com',
-            'windowscentral.com',
-            'androidcentral.com',
-            '9to5mac.com',
-            'bgr.com',
-            'gsmarena.com',
-            'macrumors.com',
-            '9to5google.com',
-            'notebookcheck.net']):
-            summary = "Bài viết này không có tóm tắt"
-        else:
-            text_to_summarize = "Summarize the following text into paragraphs, adding <li> at the beginning:" + content
+        text_to_summarize = "Summarize the following text into paragraphs, adding <li> at the beginning:" + content
 
-            # Tạo tóm tắt văn bản bằng mã của bạn
-            palm.configure(api_key='')  # Thay YOUR_API_KEY bằng API key của bạn
-            response = palm.generate_text(prompt=text_to_summarize)
-            summary = response.result
+        # Tạo tóm tắt văn bản bằng mã của bạn
+        palm.configure(api_key='')  # Thay YOUR_API_KEY bằng API key của bạn
+        response = palm.generate_text(prompt=text_to_summarize)
+        summary = response.result
 
         # Kiểm tra nếu summary không phải là None trước khi gán giá trị
         if summary is not None:
