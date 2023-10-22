@@ -6,14 +6,20 @@ from urllib.parse import urlparse
 import re
 
 # Function to check if a URL is valid
+
+
 def is_url(url):
     return validators.url(url)
 
 # Function to check if a URL is a YouTube URL
+
+
 def is_youtube_url(url):
     return 'youtube.com' in url or 'youtu.be' in url
 
 # Function to crawl a URL and extract data
+
+
 def crawl(url):
     try:
         if not is_url(url):
@@ -32,7 +38,7 @@ def crawl(url):
         article = Article(url)
         article.download()
         article.parse()
-        
+
         if article is None:
             raise Exception('Failed to retrieve article content.')
 
@@ -55,11 +61,11 @@ def crawl(url):
             important_tags = []
 
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
-                for tag in specific_div.find_all(['p', 'a', 'img', 'li','h1','h2','h3']):
+                for tag in specific_div.find_all(['p', 'a', 'img', 'li', 'h1', 'h2', 'h3']):
                     if tag.name == 'img':
                         img_src = tag.get('src', '')
                         if img_src not in seen_images_src:
@@ -89,7 +95,7 @@ def crawl(url):
                             important_tags.append(tag_str)
 
                 content_html = ''.join(important_tags)
-       
+
         # Add handling for other domains here...
         elif domain == 'www.engadget.com':
             # Xử lý nội dung từ "https://www.engadget.com/"
@@ -102,7 +108,7 @@ def crawl(url):
             important_tags = []
 
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
@@ -135,7 +141,6 @@ def crawl(url):
                         if tag_str not in seen_tags:
                             important_tags.append(tag_str)
 
-
                 content_html = ''.join(important_tags)
 
         elif domain == '9to5google.com':
@@ -150,7 +155,7 @@ def crawl(url):
             important_tags = []
 
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
@@ -185,21 +190,68 @@ def crawl(url):
 
                 content_html = ''.join(important_tags)
             # ...
+        elif domain == 'https://www.tomshardware.com/':
+            # Xử lý nội dung từ "https://www.tomshardware.com/" class="text-copy bodyCopy auto
+            soup = BeautifulSoup(article.html, 'html.parser')
+
+            # Tìm thẻ div cụ thể bạn muốn lấy (class 'text-copy bodyCopy auto')
+            specific_div = soup.find(
+                'div', class_='container med post-content')
+
+            # Khởi tạo danh sách để chứa các thẻ quan trọng
+            important_tags = []
+
+            seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
+
+            seen_a_tag = False
+            # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
+            if specific_div:
+                for tag in specific_div.find_all(['p', 'a', 'img', 'li','table']):
+                    if tag.name == 'img':
+                        img_src = tag.get('src', '')
+                        if img_src not in seen_images_src:
+                            seen_images_src.add(img_src)
+                            del tag['decoding']
+                            del tag['data-nimg']
+                            del tag['style']
+                            del tag['sizes']
+                            del tag['srcset']
+                            parent_a = tag.find_parent('a')
+                            if parent_a and not seen_a_tag:
+                                important_tags.append(str(tag))
+                            else:
+                                important_tags.append(str(tag))
+                    elif tag.name == 'a' and 'href' in tag.attrs:
+                        link_href = tag['href']
+                        if link_href not in seen_links:
+                            seen_links.add(link_href)
+                            if not seen_a_tag:
+                                important_tags.append(str(tag))
+                                seen_a_tag = True
+                    else:
+                        for attr in ["class", "id"]:
+                            del tag[attr]
+                        tag_str = str(tag)
+                        if tag_str not in seen_tags:
+                            important_tags.append(tag_str)
+
+                content_html = ''.join(important_tags)
         elif domain == 'https://www.macrumors.com/':
             # Xử lý nội dung từ "https://www.macrumors.com/"
             soup = BeautifulSoup(article.html, 'html.parser')
 
             # Tìm thẻ div cụ thể bạn muốn lấy (class 'ugc--2nTu61bm minor--3O_9dH4U')
-            specific_div = soup.find('div', class_='ugc--2nTu61bm minor--3O_9dH4U')
+            specific_div = soup.find(
+                'div', class_='ugc--2nTu61bm minor--3O_9dH4U')
 
             # Khởi tạo danh sách để chứa các thẻ quan trọng
             important_tags = []
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
-                for tag in specific_div.find_all(['p', 'a', 'img', 'li','h1','h2','h3']):
+                for tag in specific_div.find_all(['p', 'a', 'img', 'li', 'h1', 'h2', 'h3']):
                     if tag.name == 'img':
                         img_src = tag.get('src', '')
                         if img_src not in seen_images_src:
@@ -240,7 +292,7 @@ def crawl(url):
             important_tags = []
 
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
@@ -285,7 +337,7 @@ def crawl(url):
             important_tags = []
 
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
@@ -324,17 +376,18 @@ def crawl(url):
             soup = BeautifulSoup(article.html, 'html.parser')
 
             # Tìm thẻ div cụ thể bạn muốn lấy (class 'container med post-content')
-            specific_div = soup.find('div', class_="container med post-content")
+            specific_div = soup.find(
+                'div', class_="container med post-content")
 
             # Khởi tạo danh sách để chứa các thẻ quan trọng
             important_tags = []
 
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
-                for tag in specific_div.find_all(['p', 'a', 'img', 'li','h1','h2']):
+                for tag in specific_div.find_all(['p', 'a', 'img', 'li', 'h1', 'h2']):
                     if tag.name == 'img':
                         img_src = tag.get('src', '')
                         if img_src not in seen_images_src:
@@ -375,7 +428,7 @@ def crawl(url):
             important_tags = []
 
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
@@ -420,7 +473,7 @@ def crawl(url):
             important_tags = []
 
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
@@ -465,7 +518,7 @@ def crawl(url):
             important_tags = []
 
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
@@ -510,7 +563,7 @@ def crawl(url):
             important_tags = []
 
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
@@ -547,14 +600,58 @@ def crawl(url):
         elif domain == 'https://www.notebookcheck.net/':
             # Xử lý nội dung từ "https://techcrunch.com/"
             soup = BeautifulSoup(article.html, 'html.parser')
-#class="content-body"
+# class="content-body"
             specific_div = soup.find('id', id_="content")
 
             # Khởi tạo danh sách để chứa các thẻ quan trọng
             important_tags = []
 
             seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
-            
+
+            seen_a_tag = False
+            # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
+            if specific_div:
+                for tag in specific_div.find_all(['p', 'a', 'img', 'li']):
+                    if tag.name == 'img':
+                        img_src = tag.get('src', '')
+                        if img_src not in seen_images_src:
+                            seen_images_src.add(img_src)
+                            del tag['decoding']
+                            del tag['data-nimg']
+                            del tag['style']
+                            del tag['sizes']
+                            del tag['srcset']
+                            parent_a = tag.find_parent('a')
+                            if parent_a and not seen_a_tag:
+                                important_tags.append(str(tag))
+                            else:
+                                important_tags.append(str(tag))
+                    elif tag.name == 'a' and 'href' in tag.attrs:
+                        link_href = tag['href']
+                        if link_href not in seen_links:
+                            seen_links.add(link_href)
+                            if not seen_a_tag:
+                                important_tags.append(str(tag))
+                                seen_a_tag = True
+                    else:
+                        for attr in ["class", "id"]:
+                            del tag[attr]
+                        tag_str = str(tag)
+                        if tag_str not in seen_tags:
+                            important_tags.append(tag_str)
+
+                content_html = ''.join(important_tags)
+        elif domain == 'https://www.androidauthority.com/':
+            # Xử lý nội dung từ "https://techcrunch.com/"
+            soup = BeautifulSoup(article.html, 'html.parser')
+# class="content-body"
+            specific_div = soup.find('div', class_="--___id")
+
+            # Khởi tạo danh sách để chứa các thẻ quan trọng
+            important_tags = []
+
+            seen_links = set()  # Tạo một set để lưu trữ các liên kết duy nhất
+
             seen_a_tag = False
             # Lấy danh sách các thẻ <p>, <a>, <img>, <li>, và các thẻ quan trọng khác
             if specific_div:
@@ -589,7 +686,8 @@ def crawl(url):
 
                 content_html = ''.join(important_tags)
         else:
-            content_html = re.sub('\\n+', '</p><p>', '<p>' + article.text + '</p>')
+            content_html = re.sub(
+                '\\n+', '</p><p>', '<p>' + article.text + '</p>')
 
         result = {
             'url': url,
@@ -615,6 +713,7 @@ def crawl(url):
         }
 
     return result
+
 
 def save_to_database(data):
     try:
@@ -648,6 +747,7 @@ def save_to_database(data):
         print("SQLite Error:", err)
     finally:
         conn.close()
+
 
 if __name__ == '__main__':
     try:
